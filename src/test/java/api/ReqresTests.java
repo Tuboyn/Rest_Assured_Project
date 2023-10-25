@@ -6,7 +6,6 @@ import model.ResourceData;
 import model.UserData;
 import org.aeonbits.owner.ConfigFactory;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import requests.ApiRequestHelper;
 import specification.Specification;
@@ -15,15 +14,9 @@ import utils.MyConfig;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class ReqresTests {
 
-    private MyConfig config;
-
-    @BeforeMethod
-    public void setUp() {
-        config = ConfigFactory.create(MyConfig.class);
-    }
+    private final MyConfig config = ConfigFactory.create(MyConfig.class);
 
     @Test
     public void checkAvatarAndIdTest() {
