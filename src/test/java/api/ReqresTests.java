@@ -1,6 +1,8 @@
 package api;
 
-import annotations.PropertyValue;
+import enums.ApiEndpoint;
+import org.aeonbits.owner.ConfigFactory;
+import org.testng.annotations.BeforeMethod;
 import specification.Specification;
 import model.RegisterData;
 import model.RegisterResponseData;
@@ -8,7 +10,7 @@ import model.ResourceData;
 import model.UserData;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import utils.PropertyLoader;
+import utils.MyConfig;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,32 +18,22 @@ import java.util.stream.Collectors;
 import static io.restassured.RestAssured.given;
 
 public class ReqresTests {
-    private static final String BASE_URL = "https://reqres.in";
-    private static final String USERS_URL = "api/users?page=2";
-    private static final String REG_URL = "api/register";
-    private static final String RESOURCE_URL = "api/unknown";
-    private static final String DELETE_URL = "api/users/2";
 
-    @PropertyValue("email")
-    private String email;
+    private MyConfig config;
 
-    @PropertyValue("password")
-    private String password;
-    @PropertyValue("wrongEmail")
-    private String wrongEmail;
-
-
-    public ReqresTests() {
-        PropertyLoader.loadProperties(this);
+    @BeforeMethod
+    public void setUp() {
+        config = ConfigFactory.create(MyConfig.class);
     }
 
     @Test
     public void checkAvatarAndIdTest() {
-        Specification.installSpecification(Specification.responseOK(), Specification.requestSpecification(BASE_URL));
+        Specification.installSpecification(Specification.responseOK(),
+                Specification.requestSpecification(ApiEndpoint.BASE_URL.getEndpoint()));
 
         List<UserData> data = given()
                 .when()
-                .get(USERS_URL)
+                .get(ApiEndpoint.USERS_URL.getEndpoint())
                 .then()
                 .extract().body().jsonPath().getList("data", UserData.class);
 
@@ -51,28 +43,29 @@ public class ReqresTests {
 
     @Test
     public void successRegister() {
-        Specification.installSpecification(Specification.responseOK(), Specification.requestSpecification(BASE_URL));
-        Integer id = 4;
-        String token = "QpwL5tke4Pnpja7X4";
-        RegisterData regData = new RegisterData(email, password);
+        Specification.installSpecification(Specification.responseOK(),
+                Specification.requestSpecification(ApiEndpoint.BASE_URL.getEndpoint()));
+        int id = 4;
+        RegisterData regData = new RegisterData(config.email(), config.password());
         RegisterResponseData responseData = given()
                 .body(regData)
                 .when()
-                .post(REG_URL)
+                .post(ApiEndpoint.REG_URL.getEndpoint())
                 .then()
                 .extract().as(RegisterResponseData.class);
         Assert.assertEquals(responseData.getId(), id);
-        Assert.assertEquals(responseData.getToken(), token);
+        Assert.assertEquals(responseData.getToken(), config.token());
     }
 
     @Test
     public void unsuccessfulRegister() {
-        Specification.installSpecification(Specification.responseError(), Specification.requestSpecification(BASE_URL));
-        RegisterData regData = new RegisterData(wrongEmail, null);
+        Specification.installSpecification(Specification.responseError(),
+                Specification.requestSpecification(ApiEndpoint.BASE_URL.getEndpoint()));
+        RegisterData regData = new RegisterData(config.wrongEmail(), null);
         RegisterResponseData responseData = given()
                 .body(regData)
                 .when()
-                .post(REG_URL)
+                .post(ApiEndpoint.REG_URL.getEndpoint())
                 .then()
                 .extract().as(RegisterResponseData.class);
         Assert.assertNotNull(responseData.getError());
@@ -81,10 +74,11 @@ public class ReqresTests {
 
     @Test
     public void sortedYearsTest() {
-        Specification.installSpecification(Specification.responseOK(), Specification.requestSpecification(BASE_URL));
+        Specification.installSpecification(Specification.responseOK(),
+                Specification.requestSpecification(ApiEndpoint.BASE_URL.getEndpoint()));
         List<ResourceData> resourceData = given()
                 .when()
-                .get(RESOURCE_URL)
+                .get(ApiEndpoint.RESOURCE_URL.getEndpoint())
                 .then()
                 .extract().body().jsonPath().getList("data", ResourceData.class);
         List<Integer> years = resourceData.stream().map(ResourceData::getYear).collect(Collectors.toList());
@@ -94,9 +88,10 @@ public class ReqresTests {
 
     @Test
     public void deleteUserTest() {
-        Specification.installSpecification(Specification.responseUnique(204), Specification.requestSpecification(BASE_URL));
+        Specification.installSpecification(Specification.responseUnique(204),
+                Specification.requestSpecification(ApiEndpoint.BASE_URL.getEndpoint()));
         given()
                 .when()
-                .delete(DELETE_URL);
+                .delete(ApiEndpoint.DELETE_URL.getEndpoint());
     }
 }
